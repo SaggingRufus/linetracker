@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>U9 Hockey Line Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        input,
+        button,
+        textarea {
+            margin: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>U9 Hockey Line Manager</h1>
+    <div>
+        <label for="players">Enter Players (comma separated):</label>
+        <br>
+        <textarea id="players" rows="4" cols="50"></textarea>
+    </div>
+    <div>
+        <label for="lineSize">Number of Kids per Line:</label>
+        <br>
+        <input type="number" id="lineSize" min="1">
+    </div>
+    <button id="generateLinesBtn" onclick="generateLines()">Generate Lines</button>
+    <button id="nextLineBtn" onclick="nextLine()" disabled>Next Line</button>
+    <h2>Current Line</h2>
+    <div id="currentLine"></div>
+
+    <script>
+        let players = [];
+        let lineSize = 0;
+        let currentLineIndex = 0;
+        let shifts = [];
+        let lastLine = [];
+
+        function generateLines() {
+            const playerInput = document.getElementById('players').value.split(',').map(name => name.trim());
+            lineSize = parseInt(document.getElementById('lineSize').value);
+            players = playerInput.filter(name => name);
+
+            if (players.length && lineSize > 0) {
+                // Initialize shifts
+                shifts = players.map(player => ({ name: player, count: 0 }));
+
+                // Disable the Generate Lines button
+                document.getElementById('generateLinesBtn').disabled = true;
+                // Enable the Next Line button
+                document.getElementById('nextLineBtn').disabled = false;
+
+                nextLine();
+            } else {
+                alert("Please enter valid player names and line size.");
+            }
+        }
+
+        function nextLine() {
+            if (players.length === 0 || lineSize === 0) return;
+
+            // Sort players by the number of shifts they have taken (least first)
+            shifts.sort((a, b) => a.count - b.count);
+
+            // Select the next line, ensuring no player from the last line is repeated
+            let nextPlayers = [];
+            let index = 0;
+            while (nextPlayers.length < lineSize && index < shifts.length) {
+                if (!lastLine.includes(shifts[index].name)) {
+                    nextPlayers.push(shifts[index]);
+                }
+                index++;
+            }
+
+            // If we couldn't fill the line without repeating, allow repeating as needed
+            if (nextPlayers.length < lineSize) {
+                shifts.forEach(player => {
+                    if (nextPlayers.length < lineSize && !nextPlayers.includes(player)) {
+                        nextPlayers.push(player);
+                    }
+                });
+            }
+
+            // Increment the shift count for the selected players
+            nextPlayers.forEach(player => player.count++);
+
+            // Update the current line index and lastLine
+            currentLineIndex++;
+            lastLine = nextPlayers.map(player => player.name);
+
+            // Display the current line
+            const currentLineDiv = document.getElementById('currentLine');
+            currentLineDiv.innerHTML = `Line ${currentLineIndex}: ` + nextPlayers.map(player => player.name).join(', ');
+        }
+    </script>
+</body>
+
+</html>
